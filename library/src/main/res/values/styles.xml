@@ -1,0 +1,45 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <!-- dialog animations -->
+
+    <!-- slide in from down animation -->
+    <style name="DialogSlideInUpAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_in_up_dialog</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_down_dialog</item>
+    </style>
+
+    <!-- slide in from up animation -->
+    <style name="DialogSlideInDownAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_in_down_dialog</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_up_dialog</item>
+    </style>
+
+    <!-- zoom in center animation -->
+    <style name="DialogZoomInCenterAnimation">
+        <item name="android:windowEnterAnimation">@anim/zoom_in_center_dialog</item>
+        <item name="android:windowExitAnimation">@anim/zoom_out_center_dialog</item>
+    </style>
+
+    <!-- slide in and out right animation -->
+    <style name="DialogSlideInLeftOutRight">
+        <item name="android:windowEnterAnimation">@anim/slide_in_left_dialog</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_right_dialog</item>
+    </style>
+
+    <!-- slide in and out right animation -->
+    <style name="DialogFadeInOutAnimation">
+        <item name="android:windowEnterAnimation">@anim/fade_in_dialog</item>
+        <item name="android:windowExitAnimation">@anim/fade_out_dialog</item>
+    </style>
+
+    <!-- end dialog animation -->
+
+</resources>

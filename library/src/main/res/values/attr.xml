@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Text View -->
+    <declare-styleable name="CTLTextView">
+        <attr name="ctl_tv_typeface" format="string" />
+    </declare-styleable>
+
+    <!-- Edit Text -->
+    <declare-styleable name="CTLEditText">
+        <attr name="ctl_et_typeface" format="string" />
+        <attr name="ctl_et_filter" format="enum">
+            <enum name="email" value="0" />
+        </attr>
+    </declare-styleable>
+
+    <!-- Icon Button -->
+    <declare-styleable name="CTLIconButton">
+        <attr name="ctl_icon_button_padding" format="dimension"/>
+    </declare-styleable>
+
+
+</resources>
