@@ -8,11 +8,19 @@ public class Api {
     // tag for logging info
     public static final String TAG = "crystal=> ";
 
+    // web service data key
+    public static final String DATA = "data";
+
     // web service response status
     public static final class Status{
         public static final String STATUS  = "status";
         public static final String MESSAGE = "message";
         public static final String SUCCESS = "1";
+    }
+
+    // web service method type get - post
+    public enum MethodType{
+        GET, POST
     }
 
 }

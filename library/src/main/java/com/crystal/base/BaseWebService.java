@@ -1,10 +1,8 @@
 package com.crystal.base;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -27,18 +25,29 @@ import java.util.List;
 /**
  * Created by owais.ali on 5/4/2016.
  */
-public abstract class BaseWebService <T extends BaseWebService<T>> implements OnRequestPermissionResult {
+public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends BaseModel<M>> implements OnRequestPermissionResult {
 
     //////////////////////////////////////////
     // PRIVATE VAR
     //////////////////////////////////////////
 
-    protected RequestParams params;
+    protected RequestParams          params;
     protected CrystalAsyncHttpClient request;
-    private ProcessProgressDialog processProgressDialog;
-    private OnWSResponse listener;
-    private   final Context context;
-    private   int requestCode;
+    private   ProcessProgressDialog  processProgressDialog;
+    private   OnWSResponse<M>        listener;
+    private   OnWSResponse<M>        transparentListener;
+    private   final Context          context;
+    private   int                    requestCode;
+    private   boolean                cancelService;
+    private   Mode                   serviceMode;
+
+    //////////////////////////////////////////
+    // PUBLIC ENUM
+    //////////////////////////////////////////
+
+    public enum Mode{
+        TRANSPARENT, NORMAL
+    }
 
     //////////////////////////////////////////
     // CONSTRUCTOR
@@ -49,6 +58,7 @@ public abstract class BaseWebService <T extends BaseWebService<T>> implements On
         this.requestCode      = -1;
         processProgressDialog = new ProcessProgressDialog(this.context, android.R.style.Theme_Light);
         ((BaseActivity) context).setRequestPermissionResultListener(this);
+        serviceMode = Mode.NORMAL;
     }
 
     //////////////////////////////////////////
@@ -68,6 +78,65 @@ public abstract class BaseWebService <T extends BaseWebService<T>> implements On
         this.requestCode = requestCode;
         return getThis();
     }
+
+    public final void dismissProcessProgressDialog(){
+        if(processProgressDialog != null){
+            if(processProgressDialog.isShowing()){
+                processProgressDialog.dismiss();
+            }
+        }
+    }
+
+    public final void cancelRequest(){
+        if(request != null){
+            cancelService = true;
+            request.cancelRequests(context, true);
+            if(listener != null) listener.onCancel(requestCode);
+        }
+    }
+
+    public final OnWSResponse getListener(){
+        return this.listener;
+    }
+
+    public final void callService(final Mode serviceMode){
+
+        // check network connection
+        if(! AppHelper.isNetworkAvailable(context)){
+            listener.onError("No network connection.", requestCode);
+            return;
+        }
+
+        if(params == null) params = new RequestParams();
+
+        request = new CrystalAsyncHttpClient(getContext());
+        request.setProgressMessage(getProgressMessage());
+        request.setTimeout(getTimeout());
+        request.isCancelable(isCancelable());
+
+
+        // modify request client
+        request = modifyClient(request);
+
+        // show progress dialog
+        if(serviceMode == Mode.NORMAL) showProgressDialog();
+
+        if(getMethodType() == Api.MethodType.GET){
+            request.get(getApiUrl(), params, serviceMode == Mode.NORMAL ? responseHandler : transparentResponseHandler);
+        }
+        else{
+            request.post(getApiUrl(), params, serviceMode == Mode.NORMAL ? responseHandler : transparentResponseHandler);
+        }
+    }
+
+    public final void callTransparentService(final OnWSResponse<M> transparentListener){
+        this.transparentListener = transparentListener;
+        callService(Mode.TRANSPARENT);
+    }
+
+    //////////////////////////////////////////
+    // PROTECTED FUNCTIONS
+    //////////////////////////////////////////
 
     protected int getTimeout(){
         return (request != null) ? request.getTimeout() : 20000;
@@ -95,20 +164,57 @@ public abstract class BaseWebService <T extends BaseWebService<T>> implements On
         return "Please wait ...";
     }
 
-    public final void dismissProcessProgressDialog(){
-        if(processProgressDialog != null){
-            if(processProgressDialog.isShowing()){
-                processProgressDialog.dismiss();
-            }
+    protected String getStatusKey(){
+        return Api.Status.STATUS;
+    }
+
+    protected String getMessageKey(){
+        return Api.Status.MESSAGE;
+    }
+
+    protected String getDataKey(){
+        return Api.DATA;
+    }
+
+    protected String getStatusSuccess(){
+        return Api.Status.SUCCESS;
+    }
+
+    protected CrystalAsyncHttpClient modifyClient(final CrystalAsyncHttpClient client){
+        return client;
+    }
+
+    protected void callService(){
+        callService(serviceMode);
+    }
+
+    protected void showProgressDialog(){
+        if(isProcessProgressDialog() && isShowProgressDialog()){
+            processProgressDialog.show();
+        }
+        else if(isShowProgressDialog()){
+            request.showProgressBar();
         }
     }
 
-    public final void cancelRequest(){
-        if(request != null){
-            request.cancelRequests(context, true);
-            if(listener != null) listener.onCancel(requestCode);
+    protected void dismissDialog(){
+
+        // dismiss custom progress dialog
+        if (isProcessProgressDialog() && isShowProgressDialog()) {
+            if (processProgressDialog.isShowing()) {
+                if (autoDismissProgressDialog()) {
+                    processProgressDialog.dismiss();
+                }
+            }
+        }
+
+        // dismiss built-in progress dialog
+        else if (isShowProgressDialog()) {
+            request.dismissProgress();
         }
     }
+
+    protected void dataReceived(M dataModel){}
 
     //////////////////////////////////////////
     // OVERLOAD
@@ -120,9 +226,10 @@ public abstract class BaseWebService <T extends BaseWebService<T>> implements On
 
     public final void execute(final int requestCode){
 
-        execute(new OnWSResponse() {
+        execute(new OnWSResponse<M>() {
+
             @Override
-            public void onData(JSONObject data, int requestCode) {
+            public void onData(JSONObject jsonData, M dataModel, int requestCode) {
 
             }
 
@@ -147,7 +254,6 @@ public abstract class BaseWebService <T extends BaseWebService<T>> implements On
         execute(onWSResponse, requestCode);
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
     public final void execute(final OnWSResponse onWSResponse, final int requestCode){
         this.requestCode = requestCode;
         listener         = onWSResponse;
@@ -188,122 +294,6 @@ public abstract class BaseWebService <T extends BaseWebService<T>> implements On
     // PRIVATE FUNCTIONS
     //////////////////////////////////////////
 
-    private void callService(){
-
-        // check network connection
-        if(! AppHelper.isNetworkAvailable(context)){
-            listener.onError("No network connection.", requestCode);
-            return;
-        }
-
-        if(params == null) params = new RequestParams();
-
-        request = new CrystalAsyncHttpClient(getContext());
-        //request.setBasicAuth("", "");
-        request.setProgressMessage(getProgressMessage());
-        request.setTimeout(getTimeout());
-        request.isCancelable(isCancelable());
-
-        // show progress dialog
-        showProgressDialog();
-
-        request.post(getApiUrl(), params, new CrystalHttpResponseHandler() {
-            @Override
-            public void onCancel() {
-                super.onCancel();
-                listener.onCancel(requestCode);
-            }
-
-            @Override
-            public void onResponse(int arg0, Header[] arg1, String response) {
-                super.onResponse(arg0, arg1, response);
-
-                try {
-                    final JSONObject jsonObject = new JSONObject(response);
-
-                    if(jsonObject.has(Api.Status.STATUS)){
-                        if (jsonObject.getString(Api.Status.STATUS).equals(Api.Status.SUCCESS)) {
-
-                            try {
-                                if (dataIsJSONObject()) {
-                                    listener.onData(jsonObject.getJSONObject("data"), requestCode);
-                                } else {
-                                    JSONObject dataWrapper = new JSONObject();
-                                    dataWrapper.put("data", jsonObject.getJSONArray("data"));
-                                    listener.onData(dataWrapper, requestCode);
-                                }
-                            } catch (JSONException e) {
-                                listener.onData(new JSONObject(), requestCode);
-                            }
-                        } else {
-                            if(jsonObject.has(Api.Status.MESSAGE)){
-                                listener.noData(jsonObject.getString(Api.Status.MESSAGE), requestCode);
-                            }
-                            else{
-                                listener.noData(Api.Status.MESSAGE + " key not exists.", requestCode);
-                                Log.w(Api.TAG, Api.Status.MESSAGE + " key not exists.");
-                            }
-                        }
-                    }
-                    else{
-                        listener.onData(jsonObject, requestCode);
-                        Log.w(Api.TAG, Api.Status.STATUS + " key not exists.");
-                    }
-
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    listener.onError(e.getMessage(), requestCode);
-                }
-
-                // dismiss dialog
-                dismissDialog();
-            }
-
-            @Override
-            public void onFailure(int arg0, Header[] arg1, byte[] arg2, Throwable throwable) {
-
-                super.onFailure(arg0, arg1, arg2, throwable);
-                try {
-                    listener.onError((throwable.getMessage() == null) ? "Error contacting to server." : throwable.getMessage(), requestCode);
-                    dismissDialog();
-
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    listener.onError(ex.getMessage(), requestCode);
-                    dismissDialog();
-                }
-
-            }
-        });
-    }
-
-    private void showProgressDialog(){
-        if(isProcessProgressDialog() && isShowProgressDialog()){
-            processProgressDialog.show();
-        }
-        else if(isShowProgressDialog()){
-            request.showProgressBar();
-        }
-    }
-
-    private void dismissDialog(){
-
-        // dismiss custom progress dialog
-        if (isProcessProgressDialog() && isShowProgressDialog()) {
-            if (processProgressDialog.isShowing()) {
-                if (autoDismissProgressDialog()) {
-                    processProgressDialog.dismiss();
-                }
-            }
-        }
-
-        // dismiss built-in progress dialog
-        else if (isShowProgressDialog()) {
-            request.dismissProgress();
-        }
-    }
-
     //////////////////////////////////////////
     // IMPLEMENTATION
     //////////////////////////////////////////
@@ -341,6 +331,285 @@ public abstract class BaseWebService <T extends BaseWebService<T>> implements On
     // ABSTRACT FUCTIONS
     //////////////////////////////////////////
 
-    public abstract T getThis();
+    public abstract M getDataModel(JSONObject jsonData);
     public abstract String getApiUrl();
+    public abstract Api.MethodType getMethodType();
+    public abstract T getThis();
+
+    //////////////////////////////////////////
+    // PRIVATE RESPONSE HANDLER CLASS
+    //////////////////////////////////////////
+
+    private CrystalHttpResponseHandler responseHandler = new CrystalHttpResponseHandler() {
+        @Override
+        public void onCancel() {
+            super.onCancel();
+            if(cancelService){
+                cancelService = false;
+                return;
+            }
+            listener.onCancel(requestCode);
+            cancelService = false;
+        }
+
+        @Override
+        public void onResponse(int arg0, Header[] arg1, String response) {
+            super.onResponse(arg0, arg1, response);
+            if(cancelService){
+                cancelService = false;
+                return;
+            }
+
+            try {
+
+                // create response to json object
+                final JSONObject jsonObject = new JSONObject(response);
+
+                // check status key exists on response
+                if(jsonObject.has(getStatusKey())){
+
+                    // check if status is success
+                    if (jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess())) {
+
+                        // trying to create response to json
+                        try {
+
+                            // check data is json object or other format
+                            if (dataIsJSONObject()) {
+
+                                // check data key exist on data
+                                if(jsonObject.has(getDataKey())){
+
+                                    // fire on data method to caller
+                                    final JSONObject data = jsonObject.getJSONObject(getDataKey());
+                                    listener.onData(data, getDataModel(data), requestCode);
+                                    dataReceived(getDataModel(data));
+                                }
+                                else{
+
+                                    // no data key exist on response send all data to caller
+                                    listener.onData(jsonObject, getDataModel(jsonObject), requestCode);
+                                    dataReceived(getDataModel(jsonObject));
+                                }
+                            }
+
+                            // if data is another form json array or string or etc
+                            else {
+
+                                // create empty json object and get json array from response and send to caller
+                                JSONObject dataWrapper = new JSONObject();
+                                dataWrapper.put("data", jsonObject.getJSONArray("data"));
+                                listener.onData(dataWrapper, getDataModel(dataWrapper), requestCode);
+                                dataReceived(getDataModel(dataWrapper));
+                            }
+                        }
+
+                        // exception occur notify to caller with message
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                            listener.onError(e.getMessage(), requestCode);
+                        }
+                    }
+
+                    // if status is not success
+                    else {
+
+                        // check if message key exist on data
+                        if(jsonObject.has(getMessageKey())){
+
+                            // notify to caller with message
+                            listener.noData(jsonObject.getString(getMessageKey()), requestCode);
+                        }
+
+                        // opp's not message key exist on data
+                        else{
+
+                            // notify to caller there no message key exist in response
+                            listener.noData(getMessageKey() + " key not exists.", requestCode);
+                            Log.w(Api.TAG, getMessageKey()+ " key not exists.");
+                        }
+                    }
+                }
+
+                // opp's not status key exist on data
+                else{
+
+                    // notify to caller there is not status key exist in response
+                    listener.onData(jsonObject, getDataModel(jsonObject), requestCode);
+                    dataReceived(getDataModel(jsonObject));
+                    Log.w(Api.TAG, getStatusKey()+ " key not exists.");
+                }
+            }
+
+            // exception occur notify to caller with message
+            catch (JSONException e) {
+                e.printStackTrace();
+                listener.onError(e.getMessage(), requestCode);
+            }
+
+            // dismiss dialog
+            dismissDialog();
+            cancelService = false;
+        }
+
+        @Override
+        public void onFailure(int arg0, Header[] arg1, byte[] arg2, Throwable throwable) {
+            super.onFailure(arg0, arg1, arg2, throwable);
+
+            if(cancelService){
+                cancelService = false;
+                return;
+            }
+
+            try {
+
+                // notify to caller with error
+                listener.onError((throwable.getMessage() == null) ? "Error contacting to server." : throwable.getMessage(), requestCode);
+                dismissDialog();
+
+            }
+
+            // exception occur notify to caller with message
+            catch (Exception ex) {
+                ex.printStackTrace();
+                listener.onError(ex.getMessage(), requestCode);
+                dismissDialog();
+            }
+
+            cancelService = false;
+        }
+    };
+
+    private CrystalHttpResponseHandler transparentResponseHandler = new CrystalHttpResponseHandler() {
+
+        @Override
+        public void onCancel() {
+            super.onCancel();
+            if(cancelService){
+                cancelService = false;
+                return;
+            }
+            transparentListener.onCancel(requestCode);
+            cancelService = false;
+        }
+
+        @Override
+        public void onResponse(int arg0, Header[] arg1, String response) {
+            super.onResponse(arg0, arg1, response);
+            if(cancelService){
+                cancelService = false;
+                return;
+            }
+
+            try {
+
+                // create response to json object
+                final JSONObject jsonObject = new JSONObject(response);
+
+                // check status key exists on response
+                if(jsonObject.has(getStatusKey())){
+
+                    // check if status is success
+                    if (jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess())) {
+
+                        // trying to create response to json
+                        try {
+
+                            // check data is json object or other format
+                            if (dataIsJSONObject()) {
+
+                                // check data key exist on data
+                                if(jsonObject.has(getDataKey())){
+
+                                    // fire on data method to caller
+                                    final JSONObject data = jsonObject.getJSONObject(getDataKey());
+                                    transparentListener.onData(data, getDataModel(data), requestCode);
+                                }
+                                else{
+
+                                    // no data key exist on response send all data to caller
+                                    transparentListener.onData(jsonObject, getDataModel(jsonObject), requestCode);
+                                }
+                            }
+
+                            // if data is another form json array or string or etc
+                            else {
+
+                                // create empty json object and get json array from response and send to caller
+                                JSONObject dataWrapper = new JSONObject();
+                                dataWrapper.put("data", jsonObject.getJSONArray("data"));
+                                transparentListener.onData(dataWrapper, getDataModel(dataWrapper), requestCode);
+                            }
+                        }
+
+                        // exception occur notify to caller with message
+                        catch (JSONException e) {
+                            e.printStackTrace();
+                            transparentListener.onError(e.getMessage(), requestCode);
+                        }
+                    }
+
+                    // if status is not success
+                    else {
+
+                        // check if message key exist on data
+                        if(jsonObject.has(getMessageKey())){
+
+                            // notify to caller with message
+                            transparentListener.noData(jsonObject.getString(getMessageKey()), requestCode);
+                        }
+
+                        // opp's not message key exist on data
+                        else{
+
+                            // notify to caller there no message key exist in response
+                            transparentListener.noData(getMessageKey() + " key not exists.", requestCode);
+                            Log.w(Api.TAG, getMessageKey()+ " key not exists.");
+                        }
+                    }
+                }
+
+                // opp's not status key exist on data
+                else{
+
+                    // notify to caller there is not status key exist in response
+                    transparentListener.onData(jsonObject, getDataModel(jsonObject), requestCode);
+                    Log.w(Api.TAG, getStatusKey()+ " key not exists.");
+                }
+            }
+
+            // exception occur notify to caller with message
+            catch (JSONException e) {
+                e.printStackTrace();
+                transparentListener.onError(e.getMessage(), requestCode);
+            }
+
+            cancelService = false;
+        }
+
+        @Override
+        public void onFailure(int arg0, Header[] arg1, byte[] arg2, Throwable throwable) {
+            super.onFailure(arg0, arg1, arg2, throwable);
+
+            if(cancelService){
+                cancelService = false;
+                return;
+            }
+
+            try {
+
+                // notify to caller with error
+                transparentListener.onError((throwable.getMessage() == null) ? "Error contacting to server." : throwable.getMessage(), requestCode);
+
+            }
+
+            // exception occur notify to caller with message
+            catch (Exception ex) {
+                ex.printStackTrace();
+                transparentListener.onError(ex.getMessage(), requestCode);
+            }
+
+            cancelService = false;
+        }
+    };
 }

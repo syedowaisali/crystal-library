@@ -1,11 +1,10 @@
 package com.crystal.base;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.View;
@@ -22,7 +21,7 @@ import org.json.JSONObject;
 /**
  * Created by owais.ali on 5/4/2016.
  */
-public abstract class BaseActivity extends AppCompatActivity implements View.OnClickListener, OnWSResponse, OnDialogListener, OnPermissionResult {
+public abstract class BaseActivity extends AppCompatActivity implements View.OnClickListener, OnWSResponse<BaseModel>, OnDialogListener, OnPermissionResult {
 
     //////////////////////////////////////////
     // PRIVATE VAR
@@ -61,7 +60,7 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     }
 
     @Override
-    public void onData(JSONObject data, int requestCode) {
+    public void onData(JSONObject jsonData, BaseModel dataModel, int requestCode) {
 
     }
 
@@ -112,8 +111,20 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     // PUBLIC FUNCTIONS
     //////////////////////////////////////////
 
-    public final <T> T getView(int resId){
-        return (T)findViewById(resId);
+    public final <T> T getView(final int resId){
+        return getView(resId, false);
+    }
+
+    public final <T> T getView(int resId, final boolean attachClickListener){
+        final View v = findViewById(resId);
+        if(attachClickListener) v.setOnClickListener(this);
+        return (T)v;
+    }
+
+    public final <T> T getView(int resId, final View.OnClickListener clickListener){
+        final View v = findViewById(resId);
+        v.setOnClickListener(clickListener);
+        return (T)v;
     }
 
     public final <T> T getSystemsService(String name){
@@ -157,11 +168,10 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
         permissionRequest(0, onPermissionResult, permissions);
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
     public final void permissionRequest(final int requestCode, final OnPermissionResult onPermissionResult, final String... permissions){
         if(permissions.length > 0){
             try{
-                requestPermissions(permissions, requestCode);
+                ActivityCompat.requestPermissions(this, permissions, requestCode);
                 this.onPermissionResult = onPermissionResult;
             }
             catch (Exception ex){
@@ -184,12 +194,12 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     }
 
     public final void gotoActivity(final Class<?> activity, final boolean finish, final Bundle bundle){
-        if(finish)
-            finish();
 
         intent = new Intent(this, activity);
         intent.putExtras(bundle);
         startActivity(intent);
+
+        if(finish) finish();
     }
 
     // alert ------------------------------------------------------->

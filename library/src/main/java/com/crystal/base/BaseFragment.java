@@ -17,7 +17,7 @@ import org.json.JSONObject;
 /**
  * Created by owais.ali on 5/4/2016.
  */
-public abstract class BaseFragment extends Fragment implements View.OnClickListener, OnWSResponse {
+public abstract class BaseFragment extends Fragment implements View.OnClickListener, OnWSResponse<BaseModel> {
 
     protected View rootView;
 
@@ -51,7 +51,7 @@ public abstract class BaseFragment extends Fragment implements View.OnClickListe
     }
 
     @Override
-    public void onData(final JSONObject data, final int requestCode) {
+    public void onData(final JSONObject data, final BaseModel dataModel, final int requestCode) {
 
     }
 
