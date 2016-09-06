@@ -27,19 +27,21 @@ import java.util.List;
  */
 public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends BaseModel<M>> implements OnRequestPermissionResult {
 
+    private static final int TIMEOUT_IN_SECONDS = 20;
+
     //////////////////////////////////////////
     // PRIVATE VAR
     //////////////////////////////////////////
 
-    protected RequestParams          params;
-    protected CrystalAsyncHttpClient request;
-    private   ProcessProgressDialog  processProgressDialog;
-    private   OnWSResponse<M>        listener;
-    private   OnWSResponse<M>        transparentListener;
-    private   final Context          context;
-    private   int                    requestCode;
-    private   boolean                cancelService;
-    private   Mode                   serviceMode;
+    protected RequestParams              params;
+    protected CrystalAsyncHttpClient     request;
+    private final ProcessProgressDialog  processProgressDialog;
+    private   OnWSResponse<M>            listener;
+    private   OnWSResponse<M>            transparentListener;
+    private   final Context              context;
+    private   int                        requestCode;
+    private   boolean                    cancelService;
+    private   Mode                       serviceMode;
 
     //////////////////////////////////////////
     // PUBLIC ENUM
@@ -114,7 +116,6 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
         request.setTimeout(getTimeout());
         request.isCancelable(isCancelable());
 
-
         // modify request client
         request = modifyClient(request);
 
@@ -139,7 +140,7 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
     //////////////////////////////////////////
 
     protected int getTimeout(){
-        return (request != null) ? request.getTimeout() : 20000;
+        return (request != null) ? request.getTimeout() : TIMEOUT_IN_SECONDS * 1000;
     }
 
     protected boolean dataIsJSONObject(){
@@ -309,15 +310,17 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
                     }
                     else{
                         listener.onError(permissions[0] + " permission denied.", requestCode);
+                        grant = false;
                     }
                 }
 
                 if(grantResults.length > 1){
                     if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                        grant = (grant) ? grant : false;
+                        grant = true;
                     }
                     else{
                         listener.onError(permissions[0] + " permission denied.", requestCode);
+                        grant = false;
                     }
                 }
 
@@ -328,7 +331,7 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
     }
 
     //////////////////////////////////////////
-    // ABSTRACT FUCTIONS
+    // ABSTRACT FUNCTIONS
     //////////////////////////////////////////
 
     public abstract M getDataModel(JSONObject jsonData);
@@ -340,7 +343,7 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
     // PRIVATE RESPONSE HANDLER CLASS
     //////////////////////////////////////////
 
-    private CrystalHttpResponseHandler responseHandler = new CrystalHttpResponseHandler() {
+    private final CrystalHttpResponseHandler responseHandler = new CrystalHttpResponseHandler() {
         @Override
         public void onCancel() {
             super.onCancel();
@@ -480,7 +483,7 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
         }
     };
 
-    private CrystalHttpResponseHandler transparentResponseHandler = new CrystalHttpResponseHandler() {
+    private final CrystalHttpResponseHandler transparentResponseHandler = new CrystalHttpResponseHandler() {
 
         @Override
         public void onCancel() {

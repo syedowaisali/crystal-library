@@ -33,4 +33,22 @@
         android:textColor="#000"
         android:textSize="16dp"/>
 
+    <Button
+        android:id="@+id/btnNetworkRequest"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="20dp"
+        android:text="Network Request"/>
+
+    <Button
+        android:id="@+id/btnNetworkRequest2"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="20dp"
+        android:text="Network Request"/>
+
 </LinearLayout>
