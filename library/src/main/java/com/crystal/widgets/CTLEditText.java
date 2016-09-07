@@ -6,11 +6,10 @@ import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.EditText;
 
 import com.crystal.R;
-import com.crystal.utilities.Api;
+import com.crystal.helpers.CrystalLog;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,28 +35,31 @@ public class CTLEditText extends EditText {
     private String typeface;
     private int filter;
     private boolean isValid;
-    private TextValidateListener textValidateListener;
+    private ValidateListener textValidateListener;
 
     //////////////////////////////////////////
     // CONSTRUCTOR
     //////////////////////////////////////////
 
-    public CTLEditText(Context context) {
-        super(context);
-        init();
-    }
-
     public CTLEditText(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
+        initControl(context, attrs);
     }
 
     public CTLEditText(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        initControl(context, attrs);
+    }
 
-        TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.CTLEditText);
+    //////////////////////////////////////////
+    // INITIALIZING
+    //////////////////////////////////////////
+
+    private void initControl(Context context, AttributeSet attrs){
+        TypedArray array  = context.obtainStyledAttributes(attrs, R.styleable.CTLEditText);
+        TypedArray array1 = context.obtainStyledAttributes(attrs, R.styleable.CTLTextView);
         try{
-            typeface = array.getString(R.styleable.CTLEditText_ctl_et_typeface);
+            typeface = array1.getString(R.styleable.CTLTextView_ctl_tv_typeface);
             filter   = array.getInt(R.styleable.CTLEditText_ctl_et_filter, Filters.NO_FILTER);
         }
         finally {
@@ -66,10 +68,6 @@ public class CTLEditText extends EditText {
 
         init();
     }
-
-    //////////////////////////////////////////
-    // INITIALIZING
-    //////////////////////////////////////////
 
     private void init(){
         addTextChangedListener(textWatcher);
@@ -87,16 +85,24 @@ public class CTLEditText extends EditText {
                 setTypeface(Typeface.createFromAsset(getResources().getAssets(), typeface));
             }
             catch (Exception ex){
-                Log.e(Api.TAG, ex.getMessage());
+                CrystalLog.e(ex.getMessage());
             }
         }
     }
 
-    public boolean isValidate(){
+    public final void setFilter(int filter){
+        this.filter = filter;
+    }
+
+    public final boolean isValidate(){
         return isValid;
     }
 
-    public void setTextValidateListener(TextValidateListener textValidateListener){
+    public final boolean compare(EditText editText){
+        return getText().toString().equalsIgnoreCase(editText.getText().toString());
+    }
+
+    public final void setValidateListener(ValidateListener textValidateListener){
         this.textValidateListener = textValidateListener;
     }
 
@@ -113,7 +119,7 @@ public class CTLEditText extends EditText {
     }
 
     private void applyEmailFilter(final String text){
-        String regExpn =
+        final String regExpn =
                 "^(([\\w-]+\\.)+[\\w-]+|([a-zA-Z]{1}|[\\w-]{2,}))@"
                         +"((([0-1]?[0-9]{1,2}|25[0-5]|2[0-4][0-9])\\.([0-1]?"
                         +"[0-9]{1,2}|25[0-5]|2[0-4][0-9])\\."
@@ -121,10 +127,10 @@ public class CTLEditText extends EditText {
                         +"[0-9]{1,2}|25[0-5]|2[0-4][0-9])){1}|"
                         +"([a-zA-Z]+[\\w-]+\\.)+[a-zA-Z]{2,4})$";
 
-        CharSequence inputStr = text;
+        final CharSequence inputStr = text;
 
-        Pattern pattern = Pattern.compile(regExpn, Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(inputStr);
+        final Pattern pattern = Pattern.compile(regExpn, Pattern.CASE_INSENSITIVE);
+        final Matcher matcher = pattern.matcher(inputStr);
 
         isValid = matcher.matches();
     }
@@ -137,7 +143,7 @@ public class CTLEditText extends EditText {
     // PUBLIC INTERFACE
     //////////////////////////////////////////
 
-    public interface TextValidateListener{
+    public interface ValidateListener{
         void onValidate(boolean isValid);
     }
 

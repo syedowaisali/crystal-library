@@ -3,20 +3,36 @@ package com.crystal.base;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.crystal.androidtoolkit.managers.CrystalAlertDialog;
+import com.crystal.helpers.PicassoTrustAll;
 import com.crystal.interfaces.OnDialogListener;
 import com.crystal.interfaces.OnPermissionResult;
 import com.crystal.interfaces.OnRequestPermissionResult;
 import com.crystal.interfaces.OnWSResponse;
+import com.crystal.widgets.CTLEditText;
+import com.crystal.widgets.CTLTextView;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.RequestCreator;
 
 import org.json.JSONObject;
+
+import java.io.File;
 
 /**
  * Created by owais.ali on 5/4/2016.
@@ -111,17 +127,17 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     // PUBLIC FUNCTIONS
     //////////////////////////////////////////
 
-    public final <T> T getView(final int resId){
+    public final <T extends View> T getView(final int resId){
         return getView(resId, false);
     }
 
-    public final <T> T getView(int resId, final boolean attachClickListener){
+    public final <T extends View> T getView(int resId, final boolean attachClickListener){
         final View v = findViewById(resId);
         if(attachClickListener) v.setOnClickListener(this);
         return (T)v;
     }
 
-    public final <T> T getView(int resId, final View.OnClickListener clickListener){
+    public final <T extends View> T getView(int resId, final View.OnClickListener clickListener){
         final View v = findViewById(resId);
         v.setOnClickListener(clickListener);
         return (T)v;
@@ -129,6 +145,131 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
 
     public final <T> T getSystemsService(String name){
         return (T) super.getSystemService(name);
+    }
+
+    public final void bindClickListener(final int resId, final View.OnClickListener clickListener){
+        View v = getView(resId);
+        bindClickListener(v, clickListener);
+    }
+
+    public final void bindClickListener(final View v, final View.OnClickListener clickListener){
+        if(v != null) v.setOnClickListener(clickListener);
+    }
+
+    public final void bind(final int resId, Object obj, Class<?> type){
+        bind(resId, obj, type, null, null);
+    }
+
+    public final void bind(final int resId, Object obj, Class<?> type, View.OnClickListener clickListener){
+        bind(resId, obj, type, clickListener, null);
+    }
+
+    public final void bind(final int resId, Object obj, Class<?> type, Callback picassoCallback){
+        bind(resId, obj, type, null, picassoCallback);
+    }
+
+    public final void bind(final int resId, Object obj, Class<?> type, View.OnClickListener clickListener, Callback picassoCallback){
+        bind(getView(resId), obj, type, clickListener, picassoCallback);
+    }
+
+    public final void bind(final View view, Object obj, Class<?> type){
+        bind(view, obj, type, null, null);
+    }
+
+    public final void bind(final View view, Object obj, Class<?> type, View.OnClickListener clickListener){
+        bind(view, obj, type, clickListener, null);
+    }
+
+    public final void bind(final View view, Object obj, Class<?> type, Callback picassoCallback){
+        bind(view, obj, type, null, picassoCallback);
+    }
+
+    public final void bind(final View v, Object obj, Class<?> type, View.OnClickListener clickListener, Callback picassoCallback){
+
+        // set text on textview
+        if(type == TextView.class){
+
+            // get textview frm ref id
+            final TextView view = (TextView) v;
+
+            // set text if view is not null
+            if(view != null && obj != null) view.setText(String.valueOf(obj));
+            if(view != null && clickListener != null) view.setOnClickListener(clickListener);
+        }
+
+        // set text on edittext
+        else if(type == EditText.class){
+
+            // get edittext from ref id
+            final EditText view = (EditText) v;
+
+            // set text if view is not null
+            if(view != null && obj != null) view.setText(String.valueOf(obj));
+            if(view != null && clickListener != null) view.setOnClickListener(clickListener);
+        }
+
+        // set text on button
+        else if(type == Button.class){
+
+            // get edittext from ref id
+            final Button view = (Button) v;
+
+            // set text if view is not null
+            if(view != null && obj != null) view.setText(String.valueOf(obj));
+            if(view != null && clickListener != null) view.setOnClickListener(clickListener);
+        }
+
+        // set image on imageview
+        else if(type == ImageView.class){
+
+            // get imageview from ref id
+            final ImageView view = (ImageView) v;
+
+            // verify view is not null
+            if(view == null) return;
+
+            // attach click listener if view is not null
+            if(clickListener != null) view.setOnClickListener(clickListener);
+
+            // if obj data type is drawable
+            if(obj instanceof Drawable){
+                if(obj != null) view.setImageDrawable((Drawable) obj);
+                return;
+            }
+
+            // if obj data type is bitmap
+            if(obj instanceof Bitmap){
+                if(obj != null) view.setImageBitmap((Bitmap) obj);
+                return;
+            }
+
+            // get picasso
+            final Picasso picasso = PicassoTrustAll.getInstance(this);
+            RequestCreator requestCreator = null;
+
+            // if obj data type is integer
+            if(obj instanceof Integer){
+                if(obj != null) requestCreator = picasso.load((int) obj);
+            }
+
+            // if obj data type is path or url
+            else if(obj instanceof String){
+                if(obj != null) requestCreator = picasso.load(String.valueOf(obj));
+            }
+
+            // if obj data type is uri
+            else if(obj instanceof Uri){
+                if(obj != null) requestCreator = picasso.load((Uri) obj);
+            }
+
+            // if data type is file
+            else if(obj instanceof File){
+                if(obj != null) requestCreator = picasso.load((File) obj);
+            }
+
+            // load image into imageview
+            if(requestCreator != null) requestCreator.into(view, picassoCallback);
+        }
     }
 
     @Override

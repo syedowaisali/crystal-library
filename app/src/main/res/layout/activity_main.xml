@@ -13,6 +13,9 @@
         android:layout_margin="10dp"
         android:padding="10dp"
         android:background="#eeeeee"
+        android:text="Hello World"
+        android:textColor="#000"
+        app:ctl_tv_typeface="fonts/roboto/roboto_italic.ttf"
         app:ctl_et_filter="email"/>
 
     <Button
@@ -23,7 +26,7 @@
         android:layout_marginRight="10dp"
         android:text="Validate"/>
 
-    <TextView
+    <com.crystal.widgets.CTLTextView
         android:id="@+id/tvInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -50,5 +53,12 @@
         android:layout_marginRight="10dp"
         android:layout_marginTop="20dp"
         android:text="Network Request"/>
+
+    <com.crystal.widgets.CTLImageView
+        android:id="@+id/photo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="30dp"/>
 
 </LinearLayout>

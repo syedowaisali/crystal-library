@@ -34,14 +34,15 @@ public class MainActivity extends BaseActivity {
         final TextView info = getView(R.id.tvInfo);
 
         final CTLEditText editText = getView(R.id.etField);
-        editText.setTextValidateListener(new CTLEditText.TextValidateListener() {
+        editText.setValidateListener(new CTLEditText.ValidateListener() {
             @Override
             public void onValidate(boolean isValid) {
                 info.setText(isValid ? "Valid Email." : "Not Valid Email.");
+
             }
         });
 
-        findViewById(R.id.btnValidate).setOnClickListener(new View.OnClickListener() {
+        bindClickListener(R.id.btnValidate, new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(editText.isValidate()){
@@ -53,19 +54,20 @@ public class MainActivity extends BaseActivity {
             }
         });
 
-        findViewById(R.id.btnNetworkRequest).setOnClickListener(new View.OnClickListener() {
+        bindClickListener(R.id.btnNetworkRequest, new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 networkRequest();
             }
         });
 
-        findViewById(R.id.btnNetworkRequest2).setOnClickListener(new View.OnClickListener() {
+        bindClickListener(R.id.btnNetworkRequest2, new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 networkRequest2();
             }
         });
+
     }
 
     private void networkRequest(){
@@ -79,7 +81,6 @@ public class MainActivity extends BaseActivity {
 
         BookService bookService = new BookService(this);
         bookService.setParameter(params).execute(this);
-
     }
 
     private void networkRequest2(){
