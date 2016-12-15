@@ -24,7 +24,8 @@ import com.crystal.helpers.AppHelper;
 import com.crystal.helpers.CrystalParams;
 import com.crystal.interfaces.OnRequestPermissionResult;
 import com.crystal.interfaces.OnWSResponse;
-import com.crystal.ui.dialogs.ProcessProgressDialog;
+import com.crystal.models.ServiceInfo;
+import com.crystal.ui.dialogs.CrystalProgressDialog;
 import com.crystal.utilities.Api;
 
 import org.json.JSONException;
@@ -38,7 +39,7 @@ import java.util.Map;
 /**
  * Created by owais.ali on 5/4/2016.
  */
-public abstract class VolleyService<T extends VolleyService<T, M>, M extends BaseModel<M>> implements OnRequestPermissionResult {
+public abstract class VolleyService<T extends VolleyService<T, M>, M extends BaseModel<M>> {
 
     private static final int TIMEOUT_IN_SECONDS = 20;
 
@@ -48,7 +49,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
     private   CrystalParams                params;
     private   final VolleyBaseController   volleyController;
-    private   final ProcessProgressDialog  processProgressDialog;
+    private   final CrystalProgressDialog  crystalProgressDialog;
     private   OnWSResponse<M>              listener;
     private   OnWSResponse<M>              transparentListener;
     private   final Context                context;
@@ -71,18 +72,22 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     public VolleyService(final Context context){
         this.context          = context;
         this.requestCode      = -1;
-        processProgressDialog = new ProcessProgressDialog(this.context, android.R.style.Theme_Light);
-        ((BaseActivity) context).setRequestPermissionResultListener(this);
         serviceMode = Mode.NORMAL;
         volleyController = VolleyBaseController.getInstance(context);
+
+        // setup custom progress dialog
+        crystalProgressDialog = getCustomProgressDialog(context, android.R.style.Theme_Light);
+        crystalProgressDialog.setCanceledOnTouchOutside(isCancelable());
+        crystalProgressDialog.setCancelable(isCancelable());
+
 
         // setup progress dialog
         progressDialog = new ProgressDialog(context);
         progressDialog.setMessage(getProgressMessage());
         progressDialog.setIndeterminate(true);
         progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        progressDialog.setCanceledOnTouchOutside(false);
-        progressDialog.setCancelable(false);
+        progressDialog.setCanceledOnTouchOutside(isCancelable());
+        progressDialog.setCancelable(isCancelable());
         if(! TextUtils.isEmpty(getProgressTitle())) progressDialog.setTitle(getProgressTitle());
 
         if(isCancelable()){
@@ -114,9 +119,9 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     }
 
     public final void dismissProcessProgressDialog(){
-        if(processProgressDialog != null){
-            if(processProgressDialog.isShowing()){
-                processProgressDialog.dismiss();
+        if(crystalProgressDialog != null){
+            if(crystalProgressDialog.isShowing()){
+                crystalProgressDialog.dismiss();
             }
         }
     }
@@ -142,6 +147,8 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
         if(params == null) params = new CrystalParams();
 
+        params = getParams(params);
+
         // show progress dialog
         if(serviceMode == Mode.NORMAL) showProgressDialog();
 
@@ -156,7 +163,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
             }
         }
 
-        final StringRequest jsonObjectRequest = new StringRequest(
+        final Request<String> jsonObjectRequest = new StringRequest(
                 methodType,
                 url,
                 new Response.Listener<String>() {
@@ -185,6 +192,19 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
             @Override
             protected Map<String, String> getParams() throws AuthFailureError {
                 return params.getMapParams();
+            }
+
+            @Override
+            public String getCacheKey() {
+                String temp = super.getCacheKey();
+                for (Map.Entry<String, String> entry : params.getMapParams().entrySet())
+                    temp += entry.getKey() + "=" + entry.getValue();
+                return temp;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                return super.getHeaders();
             }
 
             @Override
@@ -220,7 +240,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
             }
         };
 
-        jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(getTimeout(), 1, 1f));
+        jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(getTimeout(), 0, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         jsonObjectRequest.setShouldCache(cacheEnable());
         volleyController.addToRequestQueue(jsonObjectRequest, getTAG());
     }
@@ -233,6 +253,10 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     //////////////////////////////////////////
     // PROTECTED FUNCTIONS
     //////////////////////////////////////////
+
+    protected CrystalProgressDialog getCustomProgressDialog(Context context, int theme){
+        return new CrystalProgressDialog(context, theme);
+    }
 
     protected int getTimeout(){
         return TIMEOUT_IN_SECONDS * 1000;
@@ -250,11 +274,15 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
         return true;
     }
 
-    protected boolean isProcessProgressDialog(){
+    protected boolean isShowCustomProgressDialog(){
         return false;
     }
 
     protected boolean isCancelable(){return false;}
+
+    protected CrystalParams getParams(CrystalParams params){
+        return params;
+    }
 
     protected String getProgressTitle(){
         return "";
@@ -266,6 +294,10 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
     protected String getStatusKey(){
         return Api.Status.STATUS;
+    }
+
+    protected String getStatusCodeKey(){
+        return Api.Status.STATUS_CODE;
     }
 
     protected String getMessageKey(){
@@ -280,6 +312,10 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
         return Api.Status.SUCCESS;
     }
 
+    protected boolean isSkipCondition(){
+        return false;
+    }
+
     protected String getTAG(){
         return Api.TAG;
     }
@@ -289,8 +325,8 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     }
 
     protected void showProgressDialog(){
-        if(isProcessProgressDialog() && isShowProgressDialog()){
-            processProgressDialog.show();
+        if(isShowCustomProgressDialog() && isShowProgressDialog()){
+            crystalProgressDialog.show();
         }
         else if(isShowProgressDialog()){
             progressDialog.show();
@@ -300,10 +336,10 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     protected void dismissDialog(){
 
         // dismiss custom progress dialog
-        if (isProcessProgressDialog() && isShowProgressDialog()) {
-            if (processProgressDialog.isShowing()) {
+        if (isShowCustomProgressDialog() && isShowProgressDialog()) {
+            if (crystalProgressDialog.isShowing()) {
                 if (autoDismissProgressDialog()) {
-                    processProgressDialog.dismiss();
+                    crystalProgressDialog.dismiss();
                 }
             }
         }
@@ -319,14 +355,27 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     protected void normalResponse(String response){
         try {
 
+            // create service info
+            final ServiceInfo serviceInfo = new ServiceInfo();
+
             // create response to json object
             final JSONObject jsonObject = new JSONObject(response);
 
             // check status key exists on response
-            if(jsonObject.has(getStatusKey())){
+            if(jsonObject.has(getStatusKey()) || isSkipCondition()){
+
+                // fill status
+                if(! isSkipCondition()){
+
+                    serviceInfo.setStatus(jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess()));
+                    serviceInfo.setStatusCode(jsonObject.optInt(getStatusCodeKey()));
+                    serviceInfo.setMessage(jsonObject.optString(getMessageKey()));
+
+                    onServiceInfo(serviceInfo);
+                }
 
                 // check if status is success
-                if (jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess())) {
+                if (serviceInfo.getStatus() || isSkipCondition()) {
 
                     // trying to create response to json
                     try {
@@ -339,14 +388,16 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
                                 // fire on data method to caller
                                 final JSONObject data = jsonObject.getJSONObject(getDataKey());
-                                listener.onData(data, getDataModel(data), requestCode);
-                                dataReceived(getDataModel(data));
+                                final M dataModel = getDataModel(data, serviceInfo);
+                                listener.onData(data, dataModel, requestCode);
+                                dataReceived(dataModel);
                             }
                             else{
 
                                 // no data key exist on response send all data to caller
-                                listener.onData(jsonObject, getDataModel(jsonObject), requestCode);
-                                dataReceived(getDataModel(jsonObject));
+                                final M dataModel = getDataModel(jsonObject, serviceInfo);
+                                listener.onData(jsonObject, dataModel, requestCode);
+                                dataReceived(dataModel);
                             }
                         }
 
@@ -356,8 +407,9 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
                             // create empty json object and get json array from response and send to caller
                             JSONObject dataWrapper = new JSONObject();
                             dataWrapper.put("data", jsonObject.getJSONArray("data"));
-                            listener.onData(dataWrapper, getDataModel(dataWrapper), requestCode);
-                            dataReceived(getDataModel(dataWrapper));
+                            final M dataModel = getDataModel(dataWrapper, serviceInfo);
+                            listener.onData(dataWrapper, dataModel, requestCode);
+                            dataReceived(dataModel);
                         }
                     }
 
@@ -392,8 +444,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
             else{
 
                 // notify to caller there is not status key exist in response
-                listener.onData(jsonObject, getDataModel(jsonObject), requestCode);
-                dataReceived(getDataModel(jsonObject));
+                listener.noData(getStatusKey() + " key not exists.", requestCode);
                 Log.w(Api.TAG, getStatusKey()+ " key not exists.");
             }
         }
@@ -412,14 +463,24 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
         try {
 
+            // create service info
+            final ServiceInfo serviceInfo = new ServiceInfo();
+
             // create response to json object
             final JSONObject jsonObject = new JSONObject(response);
 
             // check status key exists on response
             if(jsonObject.has(getStatusKey())){
 
+                // fill status
+                serviceInfo.setStatus(jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess()));
+                serviceInfo.setStatusCode(jsonObject.optInt(getStatusCodeKey()));
+                serviceInfo.setMessage(jsonObject.optString(getMessageKey()));
+
+                onServiceInfo(serviceInfo);
+
                 // check if status is success
-                if (jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess())) {
+                if (serviceInfo.getStatus()) {
 
                     // trying to create response to json
                     try {
@@ -432,12 +493,12 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
                                 // fire on data method to caller
                                 final JSONObject data = jsonObject.getJSONObject(getDataKey());
-                                transparentListener.onData(data, getDataModel(data), requestCode);
+                                transparentListener.onData(data, getDataModel(data, serviceInfo), requestCode);
                             }
                             else{
 
                                 // no data key exist on response send all data to caller
-                                transparentListener.onData(jsonObject, getDataModel(jsonObject), requestCode);
+                                transparentListener.onData(jsonObject, getDataModel(jsonObject, serviceInfo), requestCode);
                             }
                         }
 
@@ -447,7 +508,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
                             // create empty json object and get json array from response and send to caller
                             JSONObject dataWrapper = new JSONObject();
                             dataWrapper.put("data", jsonObject.getJSONArray("data"));
-                            transparentListener.onData(dataWrapper, getDataModel(dataWrapper), requestCode);
+                            transparentListener.onData(dataWrapper, getDataModel(dataWrapper, serviceInfo), requestCode);
                         }
                     }
 
@@ -482,7 +543,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
             else{
 
                 // notify to caller there is not status key exist in response
-                transparentListener.onData(jsonObject, getDataModel(jsonObject), requestCode);
+                transparentListener.noData(getStatusKey() + " key not exists.", requestCode);
                 Log.w(Api.TAG, getStatusKey()+ " key not exists.");
             }
         }
@@ -534,6 +595,10 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
     protected boolean cacheEnable(){
         return true;
+    }
+
+    protected boolean onServiceInfo(ServiceInfo serviceInfo){
+        return serviceInfo.getStatus();
     }
 
     //////////////////////////////////////////
@@ -618,42 +683,11 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     // IMPLEMENTATION
     //////////////////////////////////////////
 
-    @Override
-    public void permissionResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode){
-            case 0:
-                boolean grant = false;
-                if(grantResults.length > 0){
-                    if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                        grant = true;
-                    }
-                    else{
-                        listener.onError(permissions[0] + " permission denied.", requestCode);
-                        grant = false;
-                    }
-                }
-
-                if(grantResults.length > 1){
-                    if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                        grant = true;
-                    }
-                    else{
-                        listener.onError(permissions[0] + " permission denied.", requestCode);
-                        grant = false;
-                    }
-                }
-
-                if(grant) callService();
-
-                break;
-        }
-    }
-
     //////////////////////////////////////////
     // ABSTRACT FUNCTIONS
     //////////////////////////////////////////
 
-    public abstract M getDataModel(JSONObject jsonData);
+    public abstract M getDataModel(JSONObject jsonData, ServiceInfo serviceInfo);
     public abstract String getApiUrl();
     public abstract Api.MethodType getMethodType();
     public abstract T getThis();

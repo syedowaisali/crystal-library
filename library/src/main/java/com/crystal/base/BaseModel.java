@@ -1,9 +1,11 @@
 package com.crystal.base;
 
+import java.io.Serializable;
+
 /**
  * Created by owais.ali on 5/4/2016.
  */
-public abstract class BaseModel<T extends BaseModel<T>> {
+public abstract class BaseModel<T extends BaseModel<T>> implements Serializable {
 
     //////////////////////////////////////////////
     // PRIVATE VAR

@@ -91,6 +91,18 @@ public class AppHelper {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
+    public static boolean isValidField(String text, String pattern){
+        Pattern patt = Pattern.compile(pattern);
+        Matcher matcher = patt.matcher(text);
+        return matcher.matches();
+    }
+
+    public static boolean isValidNumber(String text){
+        Pattern patt = Pattern.compile("^((\\+|00)\\d+)$");
+        Matcher matcher = patt.matcher(text);
+        return matcher.matches();
+    }
+
     public static boolean isValidEmail(String email){
         String regExpn =
                 "^(([\\w-]+\\.)+[\\w-]+|([a-zA-Z]{1}|[\\w-]{2,}))@"
@@ -105,10 +117,7 @@ public class AppHelper {
         Pattern pattern = Pattern.compile(regExpn, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(inputStr);
 
-        if(matcher.matches())
-            return true;
-        else
-            return false;
+        return matcher.matches();
     }
 
     public static String getDebugKeyHash(Context ctx, String package_name){

@@ -11,7 +11,8 @@ import com.crystal.androidtoolkit.network.CrystalHttpResponseHandler;
 import com.crystal.helpers.AppHelper;
 import com.crystal.interfaces.OnRequestPermissionResult;
 import com.crystal.interfaces.OnWSResponse;
-import com.crystal.ui.dialogs.ProcessProgressDialog;
+import com.crystal.models.ServiceInfo;
+import com.crystal.ui.dialogs.CrystalProgressDialog;
 import com.crystal.utilities.Api;
 import com.loopj.android.http.RequestParams;
 
@@ -25,7 +26,7 @@ import java.util.List;
 /**
  * Created by owais.ali on 5/4/2016.
  */
-public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends BaseModel<M>> implements OnRequestPermissionResult {
+public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends BaseModel<M>>  {
 
     private static final int TIMEOUT_IN_SECONDS = 20;
 
@@ -35,7 +36,7 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
 
     protected RequestParams              params;
     protected CrystalAsyncHttpClient     request;
-    private final ProcessProgressDialog  processProgressDialog;
+    private final CrystalProgressDialog  crystalProgressDialog;
     private   OnWSResponse<M>            listener;
     private   OnWSResponse<M>            transparentListener;
     private   final Context              context;
@@ -58,9 +59,13 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
     public BaseWebService(final Context context){
         this.context          = context;
         this.requestCode      = -1;
-        processProgressDialog = new ProcessProgressDialog(this.context, android.R.style.Theme_Light);
-        ((BaseActivity) context).setRequestPermissionResultListener(this);
+
         serviceMode = Mode.NORMAL;
+
+        // setup custom progress dialog
+        crystalProgressDialog = getCustomProgressDialog(context, android.R.style.Theme_Light);
+        crystalProgressDialog.setCanceledOnTouchOutside(isCancelable());
+        crystalProgressDialog.setCancelable(isCancelable());
     }
 
     //////////////////////////////////////////
@@ -82,9 +87,9 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
     }
 
     public final void dismissProcessProgressDialog(){
-        if(processProgressDialog != null){
-            if(processProgressDialog.isShowing()){
-                processProgressDialog.dismiss();
+        if(crystalProgressDialog != null){
+            if(crystalProgressDialog.isShowing()){
+                crystalProgressDialog.dismiss();
             }
         }
     }
@@ -110,6 +115,8 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
         }
 
         if(params == null) params = new RequestParams();
+
+        params = getParams(params);
 
         request = new CrystalAsyncHttpClient(getContext());
         request.setProgressMessage(getProgressMessage());
@@ -139,6 +146,10 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
     // PROTECTED FUNCTIONS
     //////////////////////////////////////////
 
+    protected CrystalProgressDialog getCustomProgressDialog(Context context, int theme){
+        return new CrystalProgressDialog(context, theme);
+    }
+
     protected int getTimeout(){
         return (request != null) ? request.getTimeout() : TIMEOUT_IN_SECONDS * 1000;
     }
@@ -155,11 +166,15 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
         return true;
     }
 
-    protected boolean isProcessProgressDialog(){
+    protected boolean isShowCustomProgressDialog(){
         return false;
     }
 
     protected boolean isCancelable(){return false;}
+
+    protected RequestParams getParams(RequestParams params){
+        return params;
+    }
 
     protected String getProgressMessage() {
         return "Please wait ...";
@@ -167,6 +182,10 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
 
     protected String getStatusKey(){
         return Api.Status.STATUS;
+    }
+
+    protected String getStatusCodeKey(){
+        return Api.Status.STATUS_CODE;
     }
 
     protected String getMessageKey(){
@@ -190,8 +209,8 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
     }
 
     protected void showProgressDialog(){
-        if(isProcessProgressDialog() && isShowProgressDialog()){
-            processProgressDialog.show();
+        if(isShowCustomProgressDialog() && isShowProgressDialog()){
+            crystalProgressDialog.show();
         }
         else if(isShowProgressDialog()){
             request.showProgressBar();
@@ -201,10 +220,10 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
     protected void dismissDialog(){
 
         // dismiss custom progress dialog
-        if (isProcessProgressDialog() && isShowProgressDialog()) {
-            if (processProgressDialog.isShowing()) {
+        if (isShowCustomProgressDialog() && isShowProgressDialog()) {
+            if (crystalProgressDialog.isShowing()) {
                 if (autoDismissProgressDialog()) {
-                    processProgressDialog.dismiss();
+                    crystalProgressDialog.dismiss();
                 }
             }
         }
@@ -216,6 +235,10 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
     }
 
     protected void dataReceived(M dataModel){}
+
+    protected boolean onServiceInfo(ServiceInfo serviceInfo){
+        return serviceInfo.getStatus();
+    }
 
     //////////////////////////////////////////
     // OVERLOAD
@@ -299,42 +322,11 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
     // IMPLEMENTATION
     //////////////////////////////////////////
 
-    @Override
-    public void permissionResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode){
-            case 0:
-                boolean grant = false;
-                if(grantResults.length > 0){
-                    if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                        grant = true;
-                    }
-                    else{
-                        listener.onError(permissions[0] + " permission denied.", requestCode);
-                        grant = false;
-                    }
-                }
-
-                if(grantResults.length > 1){
-                    if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                        grant = true;
-                    }
-                    else{
-                        listener.onError(permissions[0] + " permission denied.", requestCode);
-                        grant = false;
-                    }
-                }
-
-                if(grant) callService();
-
-                break;
-        }
-    }
-
     //////////////////////////////////////////
     // ABSTRACT FUNCTIONS
     //////////////////////////////////////////
 
-    public abstract M getDataModel(JSONObject jsonData);
+    public abstract M getDataModel(JSONObject jsonData, ServiceInfo serviceInfo);
     public abstract String getApiUrl();
     public abstract Api.MethodType getMethodType();
     public abstract T getThis();
@@ -365,14 +357,24 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
 
             try {
 
+                // create service info
+                final ServiceInfo serviceInfo = new ServiceInfo();
+
                 // create response to json object
                 final JSONObject jsonObject = new JSONObject(response);
 
                 // check status key exists on response
                 if(jsonObject.has(getStatusKey())){
 
+                    // fill status
+                    serviceInfo.setStatus(jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess()));
+                    serviceInfo.setStatusCode(jsonObject.optInt(getStatusCodeKey()));
+                    serviceInfo.setMessage(jsonObject.optString(getMessageKey()));
+
+                    onServiceInfo(serviceInfo);
+
                     // check if status is success
-                    if (jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess())) {
+                    if (serviceInfo.getStatus()) {
 
                         // trying to create response to json
                         try {
@@ -385,14 +387,14 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
 
                                     // fire on data method to caller
                                     final JSONObject data = jsonObject.getJSONObject(getDataKey());
-                                    listener.onData(data, getDataModel(data), requestCode);
-                                    dataReceived(getDataModel(data));
+                                    listener.onData(data, getDataModel(data, serviceInfo), requestCode);
+                                    dataReceived(getDataModel(data, serviceInfo));
                                 }
                                 else{
 
                                     // no data key exist on response send all data to caller
-                                    listener.onData(jsonObject, getDataModel(jsonObject), requestCode);
-                                    dataReceived(getDataModel(jsonObject));
+                                    listener.onData(jsonObject, getDataModel(jsonObject, serviceInfo), requestCode);
+                                    dataReceived(getDataModel(jsonObject, serviceInfo));
                                 }
                             }
 
@@ -402,8 +404,8 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
                                 // create empty json object and get json array from response and send to caller
                                 JSONObject dataWrapper = new JSONObject();
                                 dataWrapper.put("data", jsonObject.getJSONArray("data"));
-                                listener.onData(dataWrapper, getDataModel(dataWrapper), requestCode);
-                                dataReceived(getDataModel(dataWrapper));
+                                listener.onData(dataWrapper, getDataModel(dataWrapper, serviceInfo), requestCode);
+                                dataReceived(getDataModel(dataWrapper, serviceInfo));
                             }
                         }
 
@@ -438,8 +440,7 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
                 else{
 
                     // notify to caller there is not status key exist in response
-                    listener.onData(jsonObject, getDataModel(jsonObject), requestCode);
-                    dataReceived(getDataModel(jsonObject));
+                    listener.noData(getStatusKey() + " key not exists.", requestCode);
                     Log.w(Api.TAG, getStatusKey()+ " key not exists.");
                 }
             }
@@ -506,14 +507,24 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
 
             try {
 
+                // create service info
+                final ServiceInfo serviceInfo = new ServiceInfo();
+
                 // create response to json object
                 final JSONObject jsonObject = new JSONObject(response);
 
                 // check status key exists on response
                 if(jsonObject.has(getStatusKey())){
 
+                    // fill status
+                    serviceInfo.setStatus(jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess()));
+                    serviceInfo.setStatusCode(jsonObject.optInt(getStatusCodeKey()));
+                    serviceInfo.setMessage(jsonObject.optString(getMessageKey()));
+
+                    onServiceInfo(serviceInfo);
+
                     // check if status is success
-                    if (jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess())) {
+                    if (serviceInfo.getStatus()) {
 
                         // trying to create response to json
                         try {
@@ -526,12 +537,14 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
 
                                     // fire on data method to caller
                                     final JSONObject data = jsonObject.getJSONObject(getDataKey());
-                                    transparentListener.onData(data, getDataModel(data), requestCode);
+                                    transparentListener.onData(data, getDataModel(data, serviceInfo), requestCode);
+                                    dataReceived(getDataModel(data, serviceInfo));
                                 }
                                 else{
 
                                     // no data key exist on response send all data to caller
-                                    transparentListener.onData(jsonObject, getDataModel(jsonObject), requestCode);
+                                    transparentListener.onData(jsonObject, getDataModel(jsonObject, serviceInfo), requestCode);
+                                    dataReceived(getDataModel(jsonObject, serviceInfo));
                                 }
                             }
 
@@ -541,7 +554,8 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
                                 // create empty json object and get json array from response and send to caller
                                 JSONObject dataWrapper = new JSONObject();
                                 dataWrapper.put("data", jsonObject.getJSONArray("data"));
-                                transparentListener.onData(dataWrapper, getDataModel(dataWrapper), requestCode);
+                                transparentListener.onData(dataWrapper, getDataModel(dataWrapper, serviceInfo), requestCode);
+                                dataReceived(getDataModel(dataWrapper, serviceInfo));
                             }
                         }
 
@@ -576,7 +590,7 @@ public abstract class BaseWebService <T extends BaseWebService<T, M>, M extends 
                 else{
 
                     // notify to caller there is not status key exist in response
-                    transparentListener.onData(jsonObject, getDataModel(jsonObject), requestCode);
+                    transparentListener.noData(getStatusKey() + " key not exists.", requestCode);
                     Log.w(Api.TAG, getStatusKey()+ " key not exists.");
                 }
             }

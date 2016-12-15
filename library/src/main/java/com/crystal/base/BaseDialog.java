@@ -32,7 +32,7 @@ public abstract class BaseDialog<T extends BaseDialog<T>> extends Dialog impleme
     //////////////////////////////////////////////
 
     public static final class Config{
-        public static final int FULL_SCREEN = android.R.style.Theme_Light;
+        public static final int FULL_SCREEN = android.R.style.Theme_NoTitleBar_Fullscreen;
     }
 
     //////////////////////////////////////////////
