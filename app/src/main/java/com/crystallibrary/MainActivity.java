@@ -54,47 +54,6 @@ public class MainActivity extends BaseActivity {
             }
         });
 
-        bindClickListener(R.id.btnNetworkRequest, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                networkRequest();
-            }
-        });
-
-        bindClickListener(R.id.btnNetworkRequest2, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                networkRequest2();
-            }
-        });
-
-    }
-
-    private void networkRequest(){
-
-        CrystalParams params = new CrystalParams();
-        //params.add("userid", "g@g.g");
-        params.add("password", "gggggg");
-        params.add("deviceType", "android");
-        params.add("deviceToken", "");
-        params.add("account_type", "1");
-
-        BookService bookService = new BookService(this);
-        bookService.setParameter(params).execute(this);
-    }
-
-    private void networkRequest2(){
-
-        CrystalParams params = new CrystalParams();
-        /*params.add("userid", "g@g.g");
-        params.add("password", "gggggg");
-        params.add("deviceType", "android");
-        params.add("deviceToken", "");
-        params.add("account_type", "1");*/
-        params.add("id", "3");
-
-        CarService carService = new CarService(this);
-        carService.setParameter(params).execute(this);
     }
 
     @Override

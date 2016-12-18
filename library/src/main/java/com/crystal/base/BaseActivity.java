@@ -1,6 +1,5 @@
 package com.crystal.base;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -8,7 +7,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.View;
@@ -24,8 +22,6 @@ import com.crystal.interfaces.OnDialogListener;
 import com.crystal.interfaces.OnPermissionResult;
 import com.crystal.interfaces.OnRequestPermissionResult;
 import com.crystal.interfaces.OnWSResponse;
-import com.crystal.widgets.CTLEditText;
-import com.crystal.widgets.CTLTextView;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.RequestCreator;
@@ -45,7 +41,6 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
 
     private Intent intent;
     private OnRequestPermissionResult onRequestPermissionResult;
-    private Context serviceContext;
     private OnPermissionResult onPermissionResult;
 
     //////////////////////////////////////////
