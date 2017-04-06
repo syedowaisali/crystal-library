@@ -139,4 +139,22 @@ public abstract class BaseFragment extends Fragment implements View.OnClickListe
     public void toast(final float message, final int length){
         toast(String.valueOf(message), length, Gravity.BOTTOM);
     }
+
+    // get views ---------------------------------------------------------
+
+    public final <T extends View> T getView(final int resId){
+        return getView(resId, false);
+    }
+
+    public final <T extends View> T getView(int resId, final boolean attachClickListener){
+        final View v = rootView.findViewById(resId);
+        if(attachClickListener) v.setOnClickListener(this);
+        return (T)v;
+    }
+
+    public final <T extends View> T getView(int resId, final View.OnClickListener clickListener){
+        final View v = rootView.findViewById(resId);
+        v.setOnClickListener(clickListener);
+        return (T)v;
+    }
 }

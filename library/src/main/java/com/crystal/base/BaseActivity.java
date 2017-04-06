@@ -1,6 +1,5 @@
 package com.crystal.base;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -42,7 +41,6 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
 
     private Intent intent;
     private OnRequestPermissionResult onRequestPermissionResult;
-    private Context serviceContext;
     private OnPermissionResult onPermissionResult;
 
     //////////////////////////////////////////
