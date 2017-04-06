@@ -6,7 +6,7 @@ package com.crystal.utilities;
 public class Api {
 
     // tag for logging info
-    public static final String TAG = "crystal=> ";
+    public static final String TAG = "cm=>";
 
     // web service data key
     public static final String DATA = "data";

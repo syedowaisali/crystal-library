@@ -21,10 +21,10 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.crystal.helpers.AppHelper;
-import com.crystal.helpers.CrystalParams;
+import com.crystal.helpers.CMParams;
 import com.crystal.interfaces.OnWSResponse;
 import com.crystal.models.ServiceInfo;
-import com.crystal.ui.dialogs.CrystalProgressDialog;
+import com.crystal.ui.dialogs.CMProgressDialog;
 import com.crystal.utilities.Api;
 
 import org.json.JSONException;
@@ -47,9 +47,9 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     // PRIVATE VAR
     //////////////////////////////////////////
 
-    private CrystalParams                params;
+    private CMParams params;
     private final VolleyBaseController   volleyController;
-    private final CrystalProgressDialog  crystalProgressDialog;
+    private final CMProgressDialog       cmProgressDialog;
     private OnWSResponse<M>              listener;
     private OnWSResponse<M>              transparentListener;
     private final Context                context;
@@ -78,9 +78,9 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
         headers = new HashMap<>();
 
         // setup custom progress dialog
-        crystalProgressDialog = getCustomProgressDialog(context, android.R.style.Theme_Light);
-        crystalProgressDialog.setCanceledOnTouchOutside(isCancelable());
-        crystalProgressDialog.setCancelable(isCancelable());
+        cmProgressDialog = getCustomProgressDialog(context, android.R.style.Theme_Light);
+        cmProgressDialog.setCanceledOnTouchOutside(isCancelable());
+        cmProgressDialog.setCancelable(isCancelable());
 
 
         // setup progress dialog
@@ -110,7 +110,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
         return this.context;
     }
 
-    public final T setParameter(final CrystalParams parameter){
+    public final T setParameter(final CMParams parameter){
         this.params = parameter;
         return getThis();
     }
@@ -121,9 +121,9 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     }
 
     public final void dismissProcessProgressDialog(){
-        if(crystalProgressDialog != null){
-            if(crystalProgressDialog.isShowing()){
-                crystalProgressDialog.dismiss();
+        if(cmProgressDialog != null){
+            if(cmProgressDialog.isShowing()){
+                cmProgressDialog.dismiss();
             }
         }
     }
@@ -147,7 +147,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
             return;
         }
 
-        if(params == null) params = new CrystalParams();
+        if(params == null) params = new CMParams();
 
         params = getParams(params);
 
@@ -251,8 +251,8 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     // PROTECTED FUNCTIONS
     //////////////////////////////////////////
 
-    protected CrystalProgressDialog getCustomProgressDialog(Context context, int theme){
-        return new CrystalProgressDialog(context, theme);
+    protected CMProgressDialog getCustomProgressDialog(Context context, int theme){
+        return new CMProgressDialog(context, theme);
     }
 
     protected int getTimeout(){
@@ -277,7 +277,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
     protected boolean isCancelable(){return false;}
 
-    protected CrystalParams getParams(CrystalParams params){
+    protected CMParams getParams(CMParams params){
         return params;
     }
 
@@ -335,7 +335,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
     protected void showProgressDialog(){
         if(isShowCustomProgressDialog() && isShowProgressDialog()){
-            crystalProgressDialog.show();
+            cmProgressDialog.show();
         }
         else if(isShowProgressDialog()){
             progressDialog.show();
@@ -346,9 +346,9 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
         // dismiss custom progress dialog
         if (isShowCustomProgressDialog() && isShowProgressDialog()) {
-            if (crystalProgressDialog.isShowing()) {
+            if (cmProgressDialog.isShowing()) {
                 if (autoDismissProgressDialog()) {
-                    crystalProgressDialog.dismiss();
+                    cmProgressDialog.dismiss();
                 }
             }
         }

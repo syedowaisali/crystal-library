@@ -5,7 +5,7 @@ import android.view.View;
 
 import com.crystal.base.BaseActivity;
 import com.crystal.base.BaseModel;
-import com.crystal.helpers.CrystalParams;
+import com.crystal.helpers.CMParams;
 import com.crystal.helpers.SharedPrefs;
 
 import org.json.JSONObject;
@@ -92,15 +92,13 @@ public class MainActivity extends BaseActivity {
 
     private void networkRequest(){
 
-        CrystalParams params = new CrystalParams();
+        CMParams params = new CMParams();
         //params.add("userid", "g@g.g");
         params.add("password", "gggggg");
         params.add("deviceType", "android");
         params.add("deviceToken", "");
         params.add("account_type", "1");
 
-        BookService bookService = new BookService(this);
-        bookService.setParameter(params).execute(this);
     }
 
     @Override

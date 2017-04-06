@@ -2,14 +2,12 @@ package com.crystal.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.widget.EditText;
 
 import com.crystal.R;
-import com.crystal.helpers.CrystalLog;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,7 +15,7 @@ import java.util.regex.Pattern;
 /**
  * Created by owais.ali on 6/30/2016.
  */
-public class CTLEditText extends EditText {
+public class CMEditText extends EditText {
 
     //////////////////////////////////////////
     // PUBLIC CLASS CONSTANT
@@ -32,7 +30,6 @@ public class CTLEditText extends EditText {
     // PRIVATE VAR
     //////////////////////////////////////////
 
-    private String typeface;
     private int filter;
     private boolean isValid;
     private ValidateListener textValidateListener;
@@ -41,12 +38,12 @@ public class CTLEditText extends EditText {
     // CONSTRUCTOR
     //////////////////////////////////////////
 
-    public CTLEditText(Context context, AttributeSet attrs) {
+    public CMEditText(Context context, AttributeSet attrs) {
         super(context, attrs);
         initControl(context, attrs);
     }
 
-    public CTLEditText(Context context, AttributeSet attrs, int defStyleAttr) {
+    public CMEditText(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initControl(context, attrs);
     }
@@ -56,11 +53,9 @@ public class CTLEditText extends EditText {
     //////////////////////////////////////////
 
     private void initControl(Context context, AttributeSet attrs){
-        TypedArray array  = context.obtainStyledAttributes(attrs, R.styleable.CTLEditText);
-        TypedArray array1 = context.obtainStyledAttributes(attrs, R.styleable.CTLTextView);
+        TypedArray array  = context.obtainStyledAttributes(attrs, R.styleable.CMEditText);
         try{
-            typeface = array1.getString(R.styleable.CTLTextView_ctl_tv_typeface);
-            filter   = array.getInt(R.styleable.CTLEditText_ctl_et_filter, Filters.NO_FILTER);
+            filter   = array.getInt(R.styleable.CMEditText_ctl_et_filter, Filters.NO_FILTER);
         }
         finally {
             array.recycle();
@@ -72,23 +67,11 @@ public class CTLEditText extends EditText {
     private void init(){
         addTextChangedListener(textWatcher);
         isValid = Boolean.FALSE;
-        setFontface(typeface);
     }
 
     //////////////////////////////////////////
     // PUBLIC METHODS
     //////////////////////////////////////////
-
-    public void setFontface(String typeface){
-        if(typeface != null){
-            try {
-                setTypeface(Typeface.createFromAsset(getResources().getAssets(), typeface));
-            }
-            catch (Exception ex){
-                CrystalLog.e(ex.getMessage());
-            }
-        }
-    }
 
     public final void setFilter(int filter){
         this.filter = filter;

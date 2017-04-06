@@ -9,13 +9,13 @@ import com.crystal.base.BaseDialog;
 /**
  * Created by owais.ali on 5/4/2016.
  */
-public class CrystalProgressDialog extends BaseDialog<CrystalProgressDialog> {
+public class CMProgressDialog extends BaseDialog<CMProgressDialog> {
 
     //////////////////////////////////////////////
     // PRIVATE STATIC INSTANCE
     //////////////////////////////////////////////
 
-    private static CrystalProgressDialog INSTANCE;
+    private static CMProgressDialog INSTANCE;
 
     //////////////////////////////////////////////
     // PRIVATE VAR
@@ -25,23 +25,23 @@ public class CrystalProgressDialog extends BaseDialog<CrystalProgressDialog> {
     // FACTORY METHOD
     //////////////////////////////////////////////
 
-    public static CrystalProgressDialog getInstance(Context context){
-        return new CrystalProgressDialog(context);
+    public static CMProgressDialog getInstance(Context context){
+        return new CMProgressDialog(context);
     }
 
-    public static CrystalProgressDialog getInstance(Context context, int style){
-        return new CrystalProgressDialog(context, style);
+    public static CMProgressDialog getInstance(Context context, int style){
+        return new CMProgressDialog(context, style);
     }
 
     //////////////////////////////////////////////
     // CONSTRUCTOR
     //////////////////////////////////////////////
 
-    public CrystalProgressDialog(Context context) {
+    public CMProgressDialog(Context context) {
         super(context);
     }
 
-    public CrystalProgressDialog(Context context, int style) {
+    public CMProgressDialog(Context context, int style) {
         super(context, style);
     }
 
@@ -55,7 +55,7 @@ public class CrystalProgressDialog extends BaseDialog<CrystalProgressDialog> {
     }
 
     @Override
-    public CrystalProgressDialog getThis() {
+    public CMProgressDialog getThis() {
         return this;
     }
 }

@@ -13,7 +13,7 @@ import com.crystal.R;
 /**
  * Created by owais.ali on 6/30/2016.
  */
-public class CTLIconButton extends Button {
+public class CMIconButton extends Button {
 
     protected int drawableWidth;
     protected DrawablePositions drawablePosition;
@@ -29,18 +29,18 @@ public class CTLIconButton extends Button {
         RIGHT
     }
 
-    public CTLIconButton(Context context) {
+    public CMIconButton(Context context) {
         super(context);
         bounds = new Rect();
     }
 
-    public CTLIconButton(Context context, AttributeSet attrs) {
+    public CMIconButton(Context context, AttributeSet attrs) {
         super(context, attrs);
         bounds = new Rect();
         applyAttributes(attrs);
     }
 
-    public CTLIconButton(Context context, AttributeSet attrs, int defStyle) {
+    public CMIconButton(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         bounds = new Rect();
         applyAttributes(attrs);
@@ -52,8 +52,8 @@ public class CTLIconButton extends Button {
             bounds = new Rect();
         }
 
-        TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.CTLIconButton);
-        int paddingId = typedArray.getDimensionPixelSize(R.styleable.CTLIconButton_ctl_icon_button_padding, 0);
+        TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.CMIconButton);
+        int paddingId = typedArray.getDimensionPixelSize(R.styleable.CMIconButton_ctl_icon_button_padding, 0);
         setIconPadding(paddingId);
         typedArray.recycle();
     }

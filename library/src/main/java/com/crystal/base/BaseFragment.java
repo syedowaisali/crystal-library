@@ -79,16 +79,6 @@ public abstract class BaseFragment extends Fragment implements View.OnClickListe
         }
     }
 
-    // on back pressed
-    public void onBackPressed(){}
-
-    // replace fragment to current fragment
-    public void changeFragment(short fragment_id){
-        //getHolder().displayView(fragment_id);
-    }
-
-    public void fragmentChange(Fragment fragment, int fragment_id){ }
-
     // get current activity
     public BaseActivity getHolder(){
         return (BaseActivity)getActivity();

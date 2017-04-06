@@ -1,6 +1,5 @@
 package com.crystal.helpers;
 
-import com.loopj.android.http.RequestParams;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -10,30 +9,30 @@ import java.util.Map;
 /**
  * Created by owais.ali on 9/5/2016.
  */
-public class CrystalParams extends RequestParams{
+public class CMParams extends RequestParams{
 
     private Map<String, String> mapParams;
     private Map<String, File> fileParams;
 
-    public CrystalParams() {
+    public CMParams() {
         super();
         mapParams = new HashMap<>();
         fileParams = new HashMap<>();
     }
 
-    public CrystalParams(Map<String, String> source) {
+    public CMParams(Map<String, String> source) {
         super(source);
         mapParams = new HashMap<>();
         fileParams = new HashMap<>();
     }
 
-    public CrystalParams(String key, String value) {
+    public CMParams(String key, String value) {
         super(key, value);
         mapParams = new HashMap<>();
         fileParams = new HashMap<>();
     }
 
-    public CrystalParams(Object... keysAndValues) {
+    public CMParams(Object... keysAndValues) {
         super(keysAndValues);
         mapParams = new HashMap<>();
         fileParams = new HashMap<>();

@@ -7,7 +7,7 @@ import com.crystal.utilities.Api;
 /**
  * Created by owais.ali on 9/7/2016.
  */
-public class CrystalLog {
+public class CMLog {
 
     public static final void d(Object obj){
         Log.d(Api.TAG, obj.toString());
