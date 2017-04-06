@@ -3,6 +3,7 @@ package com.crystallibrary;
 import android.content.Context;
 
 import com.crystal.base.VolleyService;
+import com.crystal.models.ServiceInfo;
 import com.crystal.utilities.Api;
 
 import org.json.JSONObject;
@@ -27,9 +28,9 @@ public class CarService extends VolleyService<CarService, Book> {
     }
 
     @Override
-    public Book getDataModel(JSONObject jsonData) {
+    public Book getDataModel(JSONObject jsonData, ServiceInfo serviceInfo) {
         Book book = new Book();
-        book.setId("tester");
+        book.setId(0);
         return book;
     }
 

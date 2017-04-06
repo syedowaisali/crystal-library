@@ -17,6 +17,7 @@ public class Api {
         public static final String STATUS_CODE  = "statusCode";
         public static final String MESSAGE = "message";
         public static final String SUCCESS = "1";
+        public static final String LOCALE = "locale";
     }
 
     // web service method type get - post

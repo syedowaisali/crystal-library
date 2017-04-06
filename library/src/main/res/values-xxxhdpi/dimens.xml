@@ -1,0 +1,5 @@
+<resources>
+    <dimen name="bullet_radius">3dp</dimen>
+    <dimen name="bullet_indent">10dp</dimen>
+
+</resources>

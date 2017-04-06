@@ -1,5 +1,7 @@
 package com.crystal.base;
 
+import com.crystal.models.ServiceInfo;
+
 import java.io.Serializable;
 
 /**
@@ -11,7 +13,8 @@ public abstract class BaseModel<T extends BaseModel<T>> implements Serializable 
     // PRIVATE VAR
     //////////////////////////////////////////////
 
-    private String id;
+    private int id;
+    private ServiceInfo serviceInfo;
 
     //////////////////////////////////////////////
     // CONSTRUCTOR
@@ -23,8 +26,13 @@ public abstract class BaseModel<T extends BaseModel<T>> implements Serializable 
     // SETTER'S
     //////////////////////////////////////////////
 
-    public T setId(final String id){
+    public T setId(final int id){
         this.id = id;
+        return getThis();
+    }
+
+    public T setServiceInfo(final ServiceInfo serviceInfo){
+        this.serviceInfo = serviceInfo;
         return getThis();
     }
 
@@ -32,8 +40,12 @@ public abstract class BaseModel<T extends BaseModel<T>> implements Serializable 
     // GETTER'S
     //////////////////////////////////////////////
 
-    public String getId(){
+    public int getId(){
         return this.id;
+    }
+
+    public ServiceInfo getServiceInfo(){
+        return this.serviceInfo;
     }
 
     //////////////////////////////////////////////

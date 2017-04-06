@@ -14,6 +14,7 @@ public class ServiceInfo extends BaseModel<ServiceInfo> {
     private boolean status;
     private int statusCode;
     private String message;
+    private String locale;
 
     //////////////////////////////////////////////
     // CONSTRUCTOR
@@ -40,6 +41,11 @@ public class ServiceInfo extends BaseModel<ServiceInfo> {
         return this;
     }
 
+    public ServiceInfo setLocale(final String locale){
+        this.locale = locale;
+        return this;
+    }
+
     //////////////////////////////////////////////
     // GETTER'S
     //////////////////////////////////////////////
@@ -54,6 +60,10 @@ public class ServiceInfo extends BaseModel<ServiceInfo> {
 
     public String getMessage(){
         return this.message;
+    }
+
+    public String getLocale() {
+        return locale;
     }
 
     //////////////////////////////////////////////

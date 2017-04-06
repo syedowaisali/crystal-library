@@ -39,6 +39,22 @@ public class CrystalParams extends RequestParams{
         fileParams = new HashMap<>();
     }
 
+    public void add(String key, double value){
+        add(key, String.valueOf(value));
+    }
+
+    public void add(String key, long value){
+        add(key, String.valueOf(value));
+    }
+
+    public void add(String key, float value){
+        add(key, String.valueOf(value));
+    }
+
+    public void add(String key, int value){
+        add(key, String.valueOf(value));
+    }
+
     @Override
     public void add(String key, String value) {
         super.add(key, value);

@@ -2,16 +2,17 @@ package com.crystallibrary;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.crystal.base.BaseActivity;
 import com.crystal.base.BaseModel;
 import com.crystal.helpers.CrystalParams;
 import com.crystal.helpers.SharedPrefs;
-import com.crystal.widgets.CTLEditText;
 
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 
 /**
  * Created by owais.ali on 7/22/2016.
@@ -31,7 +32,7 @@ public class MainActivity extends BaseActivity {
 
         sharedPrefs = new SharedPrefs(this);
 
-        final TextView info = getView(R.id.tvInfo);
+        /*final TextView info = getView(R.id.tvInfo);
 
         final CTLEditText editText = getView(R.id.etField);
         editText.setValidateListener(new CTLEditText.ValidateListener() {
@@ -52,7 +53,7 @@ public class MainActivity extends BaseActivity {
                     Toast.makeText(MainActivity.this, "Invalid", Toast.LENGTH_SHORT).show();
                 }
             }
-        });
+        });*/
 
         bindClickListener(R.id.btnNetworkRequest, new View.OnClickListener() {
             @Override
@@ -60,14 +61,33 @@ public class MainActivity extends BaseActivity {
                 networkRequest();
             }
         });
-
-        bindClickListener(R.id.btnNetworkRequest2, new View.OnClickListener() {
+        bindClickListener(R.id.btnUpload, new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                networkRequest2();
+
             }
         });
+    }
 
+    private File getFileFromAsset(final String path){
+        File file = new File(getCacheDir() + "/" + path);
+        try {
+
+            InputStream is = getAssets().open(path);
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(buffer);
+            fos.close();
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return file;
     }
 
     private void networkRequest(){
@@ -83,37 +103,9 @@ public class MainActivity extends BaseActivity {
         bookService.setParameter(params).execute(this);
     }
 
-    private void networkRequest2(){
-
-        CrystalParams params = new CrystalParams();
-        /*params.add("userid", "g@g.g");
-        params.add("password", "gggggg");
-        params.add("deviceType", "android");
-        params.add("deviceToken", "");
-        params.add("account_type", "1");*/
-        params.add("id", "3");
-
-        CarService carService = new CarService(this);
-        carService.setParameter(params).execute(this);
-    }
-
     @Override
     public void onData(JSONObject jsonData, BaseModel dataModel, int requestCode) {
         toast(dataModel.toString());
     }
 
-    @Override
-    public void noData(String message, int requestCode) {
-        toast(message);
-    }
-
-    @Override
-    public void onError(String error, int requestCode) {
-        toast(error);
-    }
-
-    @Override
-    public void onCancel(int requestCode) {
-        toast("Cancel");
-    }
 }

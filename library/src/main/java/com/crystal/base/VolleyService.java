@@ -22,7 +22,6 @@ import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.crystal.helpers.AppHelper;
 import com.crystal.helpers.CrystalParams;
-import com.crystal.interfaces.OnRequestPermissionResult;
 import com.crystal.interfaces.OnWSResponse;
 import com.crystal.models.ServiceInfo;
 import com.crystal.ui.dialogs.CrystalProgressDialog;
@@ -33,6 +32,7 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,15 +47,16 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     // PRIVATE VAR
     //////////////////////////////////////////
 
-    private   CrystalParams                params;
-    private   final VolleyBaseController   volleyController;
-    private   final CrystalProgressDialog  crystalProgressDialog;
-    private   OnWSResponse<M>              listener;
-    private   OnWSResponse<M>              transparentListener;
-    private   final Context                context;
-    private   int                          requestCode;
-    private   Mode                         serviceMode;
-    private   final ProgressDialog         progressDialog;
+    private CrystalParams                params;
+    private final VolleyBaseController   volleyController;
+    private final CrystalProgressDialog  crystalProgressDialog;
+    private OnWSResponse<M>              listener;
+    private OnWSResponse<M>              transparentListener;
+    private final Context                context;
+    private int                          requestCode;
+    private Mode                         serviceMode;
+    private final ProgressDialog         progressDialog;
+    private final Map<String, String>    headers;
 
     //////////////////////////////////////////
     // PUBLIC ENUM
@@ -74,6 +75,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
         this.requestCode      = -1;
         serviceMode = Mode.NORMAL;
         volleyController = VolleyBaseController.getInstance(context);
+        headers = new HashMap<>();
 
         // setup custom progress dialog
         crystalProgressDialog = getCustomProgressDialog(context, android.R.style.Theme_Light);
@@ -169,23 +171,13 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        if(serviceMode == Mode.NORMAL){
-                            normalResponse(response);
-                        }
-                        else{
-                            transparentResponse(response);
-                        }
+                        normalResponse(response);
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        if(serviceMode == Mode.NORMAL){
-                            normalError(error);
-                        }
-                        else{
-                            transparentError(error);
-                        }
+                        normalError(error);
                     }
                 }
         ){
@@ -204,7 +196,12 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                return super.getHeaders();
+                return VolleyService.this.getHeaders(headers);
+            }
+
+            @Override
+            public String getBodyContentType() {
+                return VolleyService.this.getBodyContentType(super.getBodyContentType());
             }
 
             @Override
@@ -284,6 +281,14 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
         return params;
     }
 
+    protected Map<String, String> getHeaders(final Map<String, String> headers){
+        return headers;
+    }
+
+    protected String getBodyContentType(final String bodyContentType){
+        return bodyContentType;
+    }
+
     protected String getProgressTitle(){
         return "";
     }
@@ -294,6 +299,10 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
     protected String getStatusKey(){
         return Api.Status.STATUS;
+    }
+
+    protected String getLocalKey(){
+        return Api.Status.LOCALE;
     }
 
     protected String getStatusCodeKey(){
@@ -370,6 +379,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
                     serviceInfo.setStatus(jsonObject.getString(getStatusKey()).equalsIgnoreCase(getStatusSuccess()));
                     serviceInfo.setStatusCode(jsonObject.optInt(getStatusCodeKey()));
                     serviceInfo.setMessage(jsonObject.optString(getMessageKey()));
+                    serviceInfo.setLocale(jsonObject.optString(getLocalKey()));
 
                     onServiceInfo(serviceInfo);
                 }

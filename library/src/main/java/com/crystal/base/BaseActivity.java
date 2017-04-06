@@ -8,7 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.View;
@@ -24,8 +23,6 @@ import com.crystal.interfaces.OnDialogListener;
 import com.crystal.interfaces.OnPermissionResult;
 import com.crystal.interfaces.OnRequestPermissionResult;
 import com.crystal.interfaces.OnWSResponse;
-import com.crystal.widgets.CTLEditText;
-import com.crystal.widgets.CTLTextView;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.RequestCreator;
@@ -56,14 +53,7 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     protected final void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // before set layout
-        beforeInit(savedInstanceState);
-
-        // set content view
-        setContentView(getLayout());
-
-        // call init
-        init(savedInstanceState);
+        setup(savedInstanceState);
     }
 
     //////////////////////////////////////////
@@ -118,6 +108,18 @@ public abstract class BaseActivity extends AppCompatActivity implements View.OnC
     //////////////////////////////////////////
     // PROTECTED FUNCTIONS
     //////////////////////////////////////////
+
+    protected void setup(Bundle savedInstanceState){
+
+        // before set layout
+        beforeInit(savedInstanceState);
+
+        // set content view
+        setContentView(getLayout());
+
+        // call init
+        init(savedInstanceState);
+    }
 
     protected void beforeInit(Bundle savedInstanceState){}
 
