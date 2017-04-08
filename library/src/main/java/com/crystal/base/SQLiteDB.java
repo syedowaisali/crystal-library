@@ -38,6 +38,7 @@ public abstract class SQLiteDB<T extends SQLiteDB, M extends BaseModel> extends 
     //////////////////////////////////////////////
 
     private List<M> outData;
+    private M model;
     private SQLiteDatabase sqLiteDatabase;
 
     //////////////////////////////////////////////
@@ -56,14 +57,14 @@ public abstract class SQLiteDB<T extends SQLiteDB, M extends BaseModel> extends 
     // SUPER CLASS METHOD
     //////////////////////////////////////////////
 
-    public synchronized void save(){
+    public void save(){
 
         SQLiteDatabase db = getReadableDatabase();
-        db.insertOrThrow(getTableName(), null, getData());
+        db.insertOrThrow(getTableName(), null, getData(new ContentValues()));
         db.close();
     }
 
-    private synchronized Cursor execQuery(int id, String customQuery){
+    private Cursor execQuery(int id, String customQuery){
 
         // select all query
         String selectQuery = "SELECT * FROM " + getTableName() + " ORDER BY " + getPrimaryColumn() + " ASC";
@@ -78,33 +79,33 @@ public abstract class SQLiteDB<T extends SQLiteDB, M extends BaseModel> extends 
         return sqLiteDatabase.rawQuery(selectQuery, null);
     }
 
-    public synchronized void update(){
+    public void update(){
         final SQLiteDatabase db = this.getWritableDatabase();
         String[] whereArgs = new String[]{String.valueOf(getId())};
-        db.update(getTableName(), getData(), getPrimaryColumn() + " = ?", whereArgs);
+        db.update(getTableName(), getData(new ContentValues()), getPrimaryColumn() + " = ?", whereArgs);
         db.close();
     }
 
-    public synchronized void execSQL(final String query){
+    public void execSQL(final String query){
         final SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL(query);
         db.close();
     }
 
-    public synchronized void delete(){
+    public void delete(){
         SQLiteDatabase db = this.getWritableDatabase();
         String[] whereArgs = new String[]{String.valueOf(getId())};
         db.delete(getTableName(), getPrimaryColumn() + "=?", whereArgs);
         db.close();
     }
 
-    public synchronized void deleteAll(){
+    public void deleteAll(){
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(getTableName(), null, null);
         db.close();
     }
 
-    public synchronized final List<M> getRecords(final int id, final String customQuery){
+    public List<M> getRecords(final int id, final String customQuery){
         final Cursor cursor = execQuery(id, customQuery);
         if(outData == null) outData = new ArrayList<>();
 
@@ -124,45 +125,69 @@ public abstract class SQLiteDB<T extends SQLiteDB, M extends BaseModel> extends 
         return outData;
     }
 
-    public synchronized final List<M> getRecordsById(final int id){
+    public List<M> getRecords(final int id){
         return getRecords(id, null);
     }
 
-    public synchronized final List<M> getRecordsByCustomQuery(final String customQuery){
+    public List<M> getRecords(final String customQuery){
         return getRecords(NO_ID, customQuery);
     }
 
-    public synchronized final List<M> getRecords(){
+    public List<M> getAllRecords(){
         return getRecords(NO_ID, null);
     }
 
-    public synchronized final String getStringValue(final Cursor cursor, final String columnName){
+    public M getRecord(final int id){
+        final List<M> records = getRecords(id);
+        if (records.size() > 0) {
+            return records.get(0);
+        }
+        return null;
+    }
+
+    public M getRecord(final String customQuery){
+        final List<M> records = getRecords(customQuery);
+        if(records.size() > 0) {
+            return records.get(0);
+        }
+        return null;
+    }
+
+    public String getStringValue(final Cursor cursor, final String columnName){
         final String val = cursor.getString(cursor.getColumnIndex(columnName));
         return (val == null) ? "" : val;
     }
 
-    public synchronized final int getIntegerValue(final Cursor cursor, final String columnName){
+    public int getIntValue(final Cursor cursor, final String columnName){
         return cursor.getInt(cursor.getColumnIndex(columnName));
     }
 
-    public synchronized final double getDoubleValue(final Cursor cursor, final String columnName){
+    public double getDoubleValue(final Cursor cursor, final String columnName){
         return cursor.getDouble(cursor.getColumnIndex(columnName));
     }
 
-    public synchronized final T setDataList(final List<M> outData){
+    public T setDataList(final List<M> outData){
         this.outData = outData;
         return getThis();
+    }
+
+    public T setModel(final M model){
+        this.model = model;
+        return getThis();
+    }
+
+    public M getModel(){
+        return this.model;
     }
 
     //////////////////////////////////////////////
     // ABSTRACT METHOD BODY
     //////////////////////////////////////////////
 
-
     public abstract M getItem(Cursor cursor);
     public abstract String getTableName();
     public abstract int getId();
     public abstract String getPrimaryColumn();
-    public abstract ContentValues getData();
+    public abstract ContentValues getData(final ContentValues params);
     public abstract T getThis();
 }

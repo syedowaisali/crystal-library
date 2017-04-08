@@ -2,7 +2,6 @@ package com.crystal.helpers;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.BoolRes;
 
 /**
  * Created by owais.ali on 9/6/2016.
@@ -73,25 +72,45 @@ public final class SharedPrefs {
     ////////////////////////////////////
     // GETTER'S
     ////////////////////////////////////
-
     public <T> T get(String key, Class<T> type){
         if(type == String.class){
             return type.cast(sharedPreferences.getString(key, ""));
         }
         else if(type == Float.class){
-            return type.cast(sharedPreferences.getFloat(key, 0f));
+            return type.cast(sharedPreferences.getFloat(key, 0F));
         }
         else if(type == Integer.class){
             return type.cast(sharedPreferences.getInt(key, 0));
         }
         else if(type == Long.class){
-            return type.cast(sharedPreferences.getLong(key, 0));
+            return type.cast(sharedPreferences.getLong(key, 0L));
         }
         else if(type == Boolean.class){
             return type.cast(sharedPreferences.getBoolean(key, false));
         }
         else{
             return type.cast(sharedPreferences.getString(key, ""));
+        }
+    }
+
+    public <T> T get(String key, Class<T> type, T d){
+        if(type == String.class){
+            return type.cast(sharedPreferences.getString(key, (String)d));
+        }
+        else if(type == Float.class){
+            return type.cast(sharedPreferences.getFloat(key, (Float)d));
+        }
+        else if(type == Integer.class){
+            return type.cast(sharedPreferences.getInt(key, (Integer)d));
+        }
+        else if(type == Long.class){
+            return type.cast(sharedPreferences.getLong(key, (Long)d));
+        }
+        else if(type == Boolean.class){
+            return type.cast(sharedPreferences.getBoolean(key, (Boolean)d));
+        }
+        else{
+            return type.cast(sharedPreferences.getString(key, (String)d));
         }
     }
 }
