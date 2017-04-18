@@ -50,7 +50,7 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
     private CMParams params;
     private final VolleyBaseController   volleyController;
     private final CMProgressDialog       cmProgressDialog;
-    private OnWSResponse<M>              listener;
+    protected OnWSResponse<M>            listener;
     private OnWSResponse<M>              transparentListener;
     private final Context                context;
     private int                          requestCode;
@@ -139,10 +139,10 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
         return this.listener;
     }
 
-    public final void callService(final Mode serviceMode){
+    protected void callService(final Mode serviceMode){
 
         // check network connection
-        if(! AppHelper.isNetworkAvailable(context)){
+        if(! isNetworkAvailable()){
             listener.onError("No network connection.", requestCode);
             return;
         }
@@ -323,6 +323,10 @@ public abstract class VolleyService<T extends VolleyService<T, M>, M extends Bas
 
     protected boolean isSkipCondition(){
         return false;
+    }
+
+    protected boolean isNetworkAvailable(){
+        return AppHelper.isNetworkAvailable(context);
     }
 
     protected String getTAG(){
