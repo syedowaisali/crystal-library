@@ -153,6 +153,29 @@ public abstract class SQLiteDB<T extends SQLiteDB, M extends BaseModel> extends 
         return null;
     }
 
+    public int getCount(){
+        return getCount("SELECT COUNT(*) AS count FROM " + getTableName());
+    }
+
+    public int getCount(final String column, final Object value){
+        return getCount("SELECT COUNT(*) AS count FROM " + getTableName() + " WHERE " + column  + "=" + value.toString());
+    }
+
+    public int getCount(final String query){
+
+        int count = 0;
+
+        sqLiteDatabase = this.getReadableDatabase();
+        final Cursor cursor = sqLiteDatabase.rawQuery(query, null);
+        if(cursor.moveToFirst()){
+            count = getIntValue(cursor, "count");
+        }
+        cursor.close();
+        sqLiteDatabase.close();
+
+        return count;
+    }
+
     public String getStringValue(final Cursor cursor, final String columnName){
         final String val = cursor.getString(cursor.getColumnIndex(columnName));
         return (val == null) ? "" : val;
