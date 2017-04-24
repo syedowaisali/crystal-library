@@ -17,7 +17,7 @@ ext {
 
     gitUrl = 'https://github.com/syedowaisali/crystal-library.git'
 
-    libraryVersion = '1.5.1'
+    libraryVersion = '1.5.2'
 
     developerId = 'syedowaisali'
     developerName = 'Syed Owais Ali'

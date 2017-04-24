@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteDatabase;
 import com.crystal.sqlite.SQLiteAssetHelper;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by owais.ali on 5/4/2016.
@@ -37,7 +36,7 @@ public abstract class SQLiteDB<T extends SQLiteDB, M extends BaseModel> extends 
     // PRIVATE VAR
     //////////////////////////////////////////////
 
-    private List<M> outData;
+    private ArrayList<M> outData;
     private M model;
     private SQLiteDatabase sqLiteDatabase;
 
@@ -105,7 +104,7 @@ public abstract class SQLiteDB<T extends SQLiteDB, M extends BaseModel> extends 
         db.close();
     }
 
-    public List<M> getRecords(final int id, final String customQuery){
+    public ArrayList<M> getRecords(final int id, final String customQuery){
         final Cursor cursor = execQuery(id, customQuery);
         if(outData == null) outData = new ArrayList<>();
 
@@ -125,20 +124,20 @@ public abstract class SQLiteDB<T extends SQLiteDB, M extends BaseModel> extends 
         return outData;
     }
 
-    public List<M> getRecords(final int id){
+    public ArrayList<M> getRecords(final int id){
         return getRecords(id, null);
     }
 
-    public List<M> getRecords(final String customQuery){
+    public ArrayList<M> getRecords(final String customQuery){
         return getRecords(NO_ID, customQuery);
     }
 
-    public List<M> getAllRecords(){
+    public ArrayList<M> getAllRecords(){
         return getRecords(NO_ID, null);
     }
 
     public M getRecord(final int id){
-        final List<M> records = getRecords(id);
+        final ArrayList<M> records = getRecords(id);
         if (records.size() > 0) {
             return records.get(0);
         }
@@ -146,7 +145,7 @@ public abstract class SQLiteDB<T extends SQLiteDB, M extends BaseModel> extends 
     }
 
     public M getRecord(final String customQuery){
-        final List<M> records = getRecords(customQuery);
+        final ArrayList<M> records = getRecords(customQuery);
         if(records.size() > 0) {
             return records.get(0);
         }
@@ -189,7 +188,7 @@ public abstract class SQLiteDB<T extends SQLiteDB, M extends BaseModel> extends 
         return cursor.getDouble(cursor.getColumnIndex(columnName));
     }
 
-    public T setDataList(final List<M> outData){
+    public T setDataList(final ArrayList<M> outData){
         this.outData = outData;
         return getThis();
     }
